@@ -20,10 +20,7 @@ use tabby_common::api::{code::CodeSearch, event::RawEventLogger};
 use tabby_db::DbConn;
 use tracing::{info, warn};
 
-use self::{
-    cron::{run_cron, JobType},
-    email::new_email_service,
-};
+use self::{cron::run_cron, email::new_email_service};
 use crate::schema::{
     auth::AuthenticationService,
     email::EmailService,
@@ -47,11 +44,7 @@ struct ServerContext {
 impl ServerContext {
     pub async fn new(logger: Arc<dyn RawEventLogger>, code: Arc<dyn CodeSearch>) -> Self {
         let db_conn = DbConn::new().await.unwrap();
-        let job_hooks = run_cron(&db_conn);
-        job_hooks.add_hook(
-            JobType::SyncRepositories,
-            crate::repositories::reload_repository_cache,
-        );
+        run_cron(&db_conn);
         Self {
             client: Client::default(),
             completion: worker::WorkerGroup::default(),
