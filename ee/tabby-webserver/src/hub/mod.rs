@@ -16,7 +16,10 @@ use tarpc::server::{BaseChannel, Channel};
 use tracing::warn;
 use websocket::WebSocketTransport;
 
-use crate::schema::{worker::Worker, ServiceLocator};
+use crate::{
+    repositories::{RepositoryCache, META},
+    schema::{worker::Worker, ServiceLocator},
+};
 
 pub(crate) async fn ws_handler(
     ws: WebSocketUpgrade,
@@ -132,5 +135,9 @@ impl Hub for Arc<HubImpl> {
                 SearchResponse::default()
             }
         }
+    }
+
+    async fn get_repositories(self, _context: tarpc::context::Context) -> RepositoryCache {
+        META.clone()
     }
 }

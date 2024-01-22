@@ -9,6 +9,7 @@ use tabby_common::api::{
 use tokio_tungstenite::connect_async;
 
 use super::websocket::WebSocketTransport;
+use crate::repositories::RepositoryCache;
 pub use crate::schema::worker::WorkerKind;
 
 #[tarpc::service]
@@ -23,6 +24,8 @@ pub trait Hub {
         limit: usize,
         offset: usize,
     ) -> SearchResponse;
+
+    async fn get_repositories() -> RepositoryCache;
 }
 
 pub fn tracing_context() -> tarpc::context::Context {

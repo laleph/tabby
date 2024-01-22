@@ -12,12 +12,14 @@ use axum::{
 };
 use hyper::Body;
 use juniper_axum::extract::AuthBearer;
+pub use resolve::{RepositoryCache, META};
 use tabby_common::config::RepositoryConfig;
 use tracing::{instrument, warn};
 
 use crate::{
     repositories::resolve::{
-        contains_meta, resolve_all, resolve_dir, resolve_file, resolve_meta, Meta, ResolveParams,
+        contains_meta, resolve_all, resolve_dir, resolve_file, resolve_meta, RepositoryMeta,
+        ResolveParams,
     },
     schema::auth::AuthenticationService,
 };
@@ -116,7 +118,7 @@ async fn resolve_path(
 }
 
 #[instrument(skip(repo))]
-async fn meta(Path(repo): Path<ResolveParams>) -> Result<Json<Meta>, StatusCode> {
+async fn meta(Path(repo): Path<ResolveParams>) -> Result<Json<RepositoryMeta>, StatusCode> {
     let key = repo.dataset_key();
     if let Some(resp) = resolve_meta(&key) {
         return Ok(Json(resp));
