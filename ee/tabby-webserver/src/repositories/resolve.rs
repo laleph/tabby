@@ -1,4 +1,10 @@
-use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    collections::HashMap,
+    ops::Deref,
+    path::PathBuf,
+    str::FromStr,
+    sync::{Arc, RwLock},
+};
 
 use anyhow::Result;
 use axum::{
@@ -17,7 +23,34 @@ use tower_http::services::ServeDir;
 use crate::repositories::ResolveState;
 
 lazy_static! {
-    static ref META: HashMap<DatasetKey, Meta> = load_meta();
+    static ref META: RepositoryCache = RepositoryCache::new_initialized();
+}
+
+pub fn reload_repository_cache() {
+    META.reload()
+}
+
+pub struct RepositoryCache {
+    repositories: RwLock<HashMap<DatasetKey, Meta>>,
+}
+
+impl RepositoryCache {
+    fn new_initialized() -> RepositoryCache {
+        let cache = RepositoryCache {
+            repositories: Default::default(),
+        };
+        cache.reload();
+        cache
+    }
+
+    fn reload(&self) {
+        let mut repositories = self.repositories.write().unwrap();
+        *repositories = load_meta();
+    }
+
+    pub fn repositories<'a>(&'a self) -> impl Deref<Target = HashMap<DatasetKey, Meta>> + 'a {
+        self.repositories.read().unwrap()
+    }
 }
 
 const DIRECTORY_MIME_TYPE: &str = "application/vnd.directory+json";
@@ -102,7 +135,6 @@ impl From<SourceFile> for Meta {
     }
 }
 
-/// TODO: implement auto reloading logic in future (so changes produced by tabby-scheduler command will be loaded)
 fn load_meta() -> HashMap<DatasetKey, Meta> {
     let mut dataset = HashMap::new();
     let repo_conf = match Config::load() {
@@ -197,14 +229,14 @@ pub async fn resolve_file(root: PathBuf, repo: &ResolveParams) -> Result<Respons
 }
 
 pub fn resolve_meta(key: &DatasetKey) -> Option<Meta> {
-    if let Some(meta) = META.get(key) {
+    if let Some(meta) = META.repositories().get(key) {
         return Some(meta.clone());
     }
     None
 }
 
 pub fn contains_meta(key: &DatasetKey) -> bool {
-    META.contains_key(key)
+    META.repositories().contains_key(key)
 }
 
 pub fn resolve_all(rs: Arc<ResolveState>) -> Result<Response> {
