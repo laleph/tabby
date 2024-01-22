@@ -48,7 +48,7 @@ impl RepositoryCache {
         *repositories = load_meta();
     }
 
-    pub fn repositories<'a>(&'a self) -> impl Deref<Target = HashMap<DatasetKey, Meta>> + 'a {
+    pub fn repositories(&self) -> impl Deref<Target = HashMap<DatasetKey, Meta>> + '_ {
         self.repositories.read().unwrap()
     }
 }
