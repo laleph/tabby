@@ -2,10 +2,11 @@ use anyhow::Result;
 use async_trait::async_trait;
 use juniper::{GraphQLObject, ID};
 use juniper_axum::relay::NodeType;
+use serde::{Deserialize, Serialize};
 
 use super::Context;
 
-#[derive(GraphQLObject, Debug)]
+#[derive(GraphQLObject, Debug, Serialize, Deserialize)]
 #[graphql(context = Context)]
 pub struct Repository {
     pub id: juniper::ID,
